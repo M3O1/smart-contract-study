@@ -2,9 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./Blacklistable.sol";
 
 /// Simple Smart Contract That Implements a Token that can be transferred
-contract Token is Ownable {
+contract Token is Ownable, Blacklistable {
     string public name = "M301";
     string public symbol = "MT";
 
@@ -19,7 +20,7 @@ contract Token is Ownable {
         balances[msg.sender] = _totalSupply;
     }
 
-    function transfer(address to, uint256 amount) external {
+    function transfer(address to, uint256 amount) external verifyBlacklist(to) {
         require(balances[msg.sender] >= amount, "Not Enough Tokens");
 
         // transfer the amount

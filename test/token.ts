@@ -39,7 +39,18 @@ describe("token Contract", () => {
     await expect(m3o1Token.connect(address1)
       .transfer(address2.address, 50))
       .to.be.revertedWith("Not Enough Tokens");
+  });
 
+  it("Should fail if sender is blacklisted", async function() {
+    const [_, address1, address2] = await ethers.getSigners();
+    const m3o1Token = await initializeToken();
+    await m3o1Token.transfer(address1.address, 50);
+
+    await m3o1Token.blacklisting(address1.address);
+
+    await expect(m3o1Token.connect(address1)
+      .transfer(address2.address, 10))
+      .to.be.revertedWith("Sender is Blacklisted");
   });
 });
 
