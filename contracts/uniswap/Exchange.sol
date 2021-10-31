@@ -23,7 +23,36 @@ contract Exchange {
         return tokenAddress;
     }
 
+    // 유동성 비율 계산
+    function getAmount(
+        uint256 inputAmount,
+        uint256 inputReserve,
+        uint256 outputReserve
+    ) public pure returns (uint256) {
+        require(inputReserve > 0 && outputReserve > 0, "invalid reserves");
+        return (outputReserve * inputAmount) / (inputReserve + inputAmount);
+    }
+
+    // 현재 유동성 풀 내 토큰 보유량
     function getReserve() external view returns (uint256) {
+        return _getReserve();
+    }
+
+    // 현재 유동성 풀 내 이더 보유량
+    function getBalance() external view returns (uint256) {
+        return _getBalance();
+    }
+
+    // 현재 유동성 상수
+    function getK() external view returns (uint256) {
+        return _getReserve() * _getBalance();
+    }
+
+    function _getReserve() internal view returns (uint256) {
         return IERC20(tokenAddress).balanceOf(address(this));
+    }
+
+    function _getBalance() internal view returns (uint256) {
+        return address(this).balance;
     }
 }

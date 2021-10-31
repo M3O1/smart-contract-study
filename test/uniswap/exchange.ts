@@ -1,12 +1,12 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { BigNumber } from "ethers";
-import { toWei, getBalance } from "../testUtils";
+import { toWei } from "../testUtils";
 
 describe("exchange", () => {
-  it("유동성 풀에 공급하면, Fee는 Exchange에 들어가고, BasicToken은 유동성 풀에 들어간다", async () => {
+  it("유동성 풀에 ether는 100만큼 넣고, token은 120만큼 넣는다", async () => {
 
-    const fee = toWei(100);
+    const etherAmount = toWei(100);
     const tokenAmount = toWei(120);
     const [owner, address1] = await ethers.getSigners();
 
@@ -18,11 +18,12 @@ describe("exchange", () => {
 
     // When
     await basicToken.connect(address1).approve(exchange.address, tokenAmount);
-    await exchange.connect(address1).addLiquidity(tokenAmount, { value: fee });
+    await exchange.connect(address1).addLiquidity(tokenAmount, { value: etherAmount });
 
     // Then
-    expect(await getBalance(exchange.address)).to.equal(fee);
+    expect(await exchange.getBalance()).to.equal(etherAmount);
     expect(await exchange.getReserve()).to.equal(tokenAmount);
+    expect(await exchange.getK()).to.equal(etherAmount.mul(tokenAmount));
   });
 });
 
