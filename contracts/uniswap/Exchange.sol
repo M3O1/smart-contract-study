@@ -24,7 +24,7 @@ contract Exchange {
     }
 
     // 유동성 비율 계산
-    function getAmount(
+    function getSwapAmount(
         uint256 inputAmount,
         uint256 inputReserve,
         uint256 outputReserve
