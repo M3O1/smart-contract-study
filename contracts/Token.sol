@@ -20,15 +20,23 @@ contract Token is Ownable, Blacklistable {
         balances[msg.sender] = _totalSupply;
     }
 
-    function transfer(address to, uint256 amount) external verifyBlacklist(to) {
+    function transfer(address to, uint256 amount) virtual external {
         require(balances[msg.sender] >= amount, "Not Enough Tokens");
 
+        _transfer(to, amount);
+    }
+
+    function _transfer(address to, uint256 amount) internal verifyBlacklist(to) {
         // transfer the amount
         balances[msg.sender] -= amount;
         balances[to] += amount;
     }
 
-    function balanceOf(address account) external view returns (uint256){
-        return balances[account];
+    function balanceOf(address _address) external view returns (uint256){
+        return _balanceOf(_address);
+    }
+
+    function _balanceOf(address _address) internal view returns (uint256) {
+        return balances[_address];
     }
 }
