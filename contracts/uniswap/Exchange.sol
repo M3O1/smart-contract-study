@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
 
 contract Exchange {
     address private tokenAddress;
@@ -12,6 +13,18 @@ contract Exchange {
     modifier verify(address addr){
         require(addr != address(0), "invalid token address");
         _;
+    }
+
+    function ethToTokenSwap(uint256 _minTokens) public payable {
+        uint256 tokensBought = getSwapAmount(
+            msg.value,
+            _getBalance() - msg.value,
+            _getReserve()
+        );
+        console.log(tokensBought, _minTokens);
+        require(tokensBought >= _minTokens, "insufficient output amount");
+
+        IERC20(tokenAddress).transfer(msg.sender, tokensBought);
     }
 
     function addLiquidity(uint256 _tokenAmount) public payable {
@@ -45,6 +58,10 @@ contract Exchange {
 
     // 현재 유동성 상수
     function getK() external view returns (uint256) {
+        return invariant();
+    }
+
+    function invariant() internal view returns (uint256) {
         return _getReserve() * _getBalance();
     }
 

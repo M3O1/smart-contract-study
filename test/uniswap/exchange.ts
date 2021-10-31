@@ -1,9 +1,9 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { BigNumber, Signer } from "ethers";
+import { BigNumber } from "ethers";
 import { toWei } from "../testUtils";
 import { BasicToken, Exchange } from "../../typechain";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/src/signers";
+import exp from "constants";
 
 describe("exchange", () => {
   let basicToken: BasicToken;
@@ -40,10 +40,41 @@ describe("exchange", () => {
   it("10000개의 이더와 20000개의 토큰이 있을 때, 100개의 이더에 대한 토큰 비율은 198이다.", async () => {
     const etherAmount = 10000;
     const tokenAmount = 20000;
-    await  basicToken.approve(exchange.address, tokenAmount);
-    await  exchange.addLiquidity(tokenAmount, {value: etherAmount});
+    await basicToken.approve(exchange.address, tokenAmount);
+    await exchange.addLiquidity(tokenAmount, {value: etherAmount});
 
     expect(await exchange.getSwapAmount(BigNumber.from(100), etherAmount, tokenAmount)).to.equal(198);
+  });
+
+  it("10000개의 이더와 20000개의 토큰이 있을 때, 100개의 이더를 swap요청하면 198개를 받을 수 있다.", async () => {
+    const etherAmount = 10000;
+    const tokenAmount = 20000;
+    const [_, address1] = await ethers.getSigners();
+
+    await basicToken.approve(exchange.address, tokenAmount);
+    await exchange.addLiquidity(tokenAmount, {value: etherAmount});
+
+    // address1의 token 갯수는 0개이다.
+    expect(await basicToken.balanceOf(address1.address)).to.be.equal(BigNumber.from(0));
+
+    await exchange.connect(address1).ethToTokenSwap(195, {value: 100});
+
+    // address1의 token 갯수는 198개이다.
+    expect(await basicToken.balanceOf(address1.address)).to.be.equal(BigNumber.from(198));
+  })
+
+  it("10000개의 이더와 20000개의 토큰이 있을 때, 100개의 이더를 swap요청 시 슬리피지로 200을 걸면, 받지 않는다.", async () => {
+    const etherAmount = 10000;
+    const tokenAmount = 20000;
+    const [_, address1] = await ethers.getSigners();
+
+    await basicToken.approve(exchange.address, tokenAmount);
+    await exchange.addLiquidity(tokenAmount, {value: etherAmount});
+
+    // address1의 token 갯수는 0개이다.
+    expect(await basicToken.balanceOf(address1.address)).to.be.equal(BigNumber.from(0));
+
+    await expect(exchange.connect(address1).ethToTokenSwap(200, {value: 100})).to.be.revertedWith("insufficient output amount");
   })
 });
 
