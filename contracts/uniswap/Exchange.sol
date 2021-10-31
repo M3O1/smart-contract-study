@@ -18,10 +18,9 @@ contract Exchange {
     function ethToTokenSwap(uint256 _minTokens) public payable {
         uint256 tokensBought = getSwapAmount(
             msg.value,
-            _getBalance() - msg.value,
+            _getBalance(),
             _getReserve()
         );
-        console.log(tokensBought, _minTokens);
         require(tokensBought >= _minTokens, "insufficient output amount");
 
         IERC20(tokenAddress).transfer(msg.sender, tokensBought);
@@ -70,6 +69,7 @@ contract Exchange {
     }
 
     function _getBalance() internal view returns (uint256) {
-        return address(this).balance;
+        // msg.value가 존재하는 경우, address(this).balance에는 msg.value가 포함되어 있음
+        return address(this).balance - msg.value;
     }
 }
