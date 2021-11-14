@@ -16,14 +16,19 @@ contract Exchange {
     }
 
     function ethToTokenSwap(uint256 _minTokens) public payable {
-        uint256 tokensBought = getSwapAmount(
-            msg.value,
-            _getBalance(),
-            _getReserve()
-        );
+        uint256 tokensBought = getSwapAmount(msg.value, _getBalance(), _getReserve());
+
         require(tokensBought >= _minTokens, "insufficient output amount");
 
         IERC20(tokenAddress).transfer(msg.sender, tokensBought);
+    }
+
+    function tokenToEthSwap(uint256 inputTokens, uint256 _minEth) public {
+        uint256 ethBought = getSwapAmount(inputTokens, _getReserve(), _getBalance());
+        require(ethBought >= _minEth, "insufficient output amount");
+
+        IERC20(tokenAddress).transferFrom(msg.sender, address(this), inputTokens);
+        payable(msg.sender).transfer(ethBought);
     }
 
     function addLiquidity(uint256 _tokenAmount) public payable {
