@@ -5,28 +5,12 @@ import '@openzeppelin/contracts/interfaces/IERC20.sol';
 
 contract ERCToken is IERC20 {
 
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /**
-     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-     * a call to {approve}. `value` is the new allowance.
-     */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
     string private _name;
     string private _symbol;
 
     uint256 private _totalSupply;
 
-    // Key-Value Store For each account balance
     mapping(address => uint256) private _balances;
-
     mapping(address => mapping(address => uint256)) private _allowances;
 
     constructor(string memory name_, string memory symbol_, uint256 totalSupply_) {
@@ -39,7 +23,7 @@ contract ERCToken is IERC20 {
     /**
      * @dev Returns the name of the token.
      */
-    function name() public view virtual override returns (string memory) {
+    function name() public view virtual returns (string memory) {
         return _name;
     }
 
@@ -47,21 +31,21 @@ contract ERCToken is IERC20 {
      * @dev Returns the symbol of the token, usually a shorter version of the
      * name.
      */
-    function symbol() public view virtual override returns (string memory) {
+    function symbol() public view virtual returns (string memory) {
         return _symbol;
     }
 
     /**
      * @dev Returns the amount of tokens in existence.
      */
-    function totalSupply() external view returns (uint256) {
+    function totalSupply() external view override returns (uint256) {
         return _totalSupply;
     }
 
     /**
      * @dev Returns the amount of tokens owned by `account`.
      */
-    function balanceOf(address account) external view returns (uint256) {
+    function balanceOf(address account) external view override returns (uint256) {
         return _balances[account];
     }
 
@@ -72,7 +56,7 @@ contract ERCToken is IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function transfer(address recipient, uint256 amount) external returns (bool) {
+    function transfer(address recipient, uint256 amount) external override returns (bool) {
         _transfer(msg.sender, recipient, amount);
         return true;
     }
@@ -84,7 +68,7 @@ contract ERCToken is IERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(address owner, address spender) external view returns (uint256) {
+    function allowance(address owner, address spender) external view override returns (uint256) {
         return _allowances[owner][spender];
     }
 
@@ -102,7 +86,7 @@ contract ERCToken is IERC20 {
      *
      * Emits an {Approval} event.
      */
-    function approve(address spender, uint256 amount) external returns (bool) {
+    function approve(address spender, uint256 amount) external override returns (bool) {
         _approve(msg.sender, spender, amount);
         return true;
     }
@@ -120,7 +104,7 @@ contract ERCToken is IERC20 {
         address sender,
         address recipient,
         uint256 amount
-    ) external returns (bool) {
+    ) external override returns (bool) {
         _transfer(sender, recipient, amount);
 
         uint256 currentAllowance = _allowances[sender][msg.sender];
