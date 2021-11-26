@@ -7,7 +7,7 @@ import "../uniswapv2/interfaces/IUniswapV2Pair.sol";
 import "./interfaces/IUniswapV2Router02.sol";
 import "../uniswapv2/interfaces/IERC20.sol";
 
-contract FlashSwaper is IUniswapV2Callee{
+contract FlashCallback is IUniswapV2Callee{
     address public immutable uniFactory;
     address public immutable sushiFactory;
 
