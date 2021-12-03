@@ -13,12 +13,13 @@ contract FlashCallback is IUniswapV2Callee{
 
     uint constant deadline = 1 hours;
 
-    IUniswapV2Router02 immutable uniRouter;
-    IUniswapV2Router02 immutable sushiRouter;
+    address public immutable uniRouter;
+    address public immutable sushiRouter;
 
     constructor(address uniRouterAddress, address sushiRouterAddress) public {
-        uniRouter = IUniswapV2Router02(uniRouterAddress);
-        sushiRouter = IUniswapV2Router02(sushiRouterAddress);
+        // 주소 가져오기
+        uniRouter = uniRouterAddress;
+        sushiRouter = sushiRouterAddress;
 
         // Factory 주소 가져오기
         uniFactory = IUniswapV2Router02(uniRouterAddress).factory();
@@ -28,7 +29,7 @@ contract FlashCallback is IUniswapV2Callee{
     // 콜백 호출만 허용하도록 구성
     modifier onlyAllowCallback() {
         address factory = IUniswapV2Pair(msg.sender).factory();
-        require((factory == uniFactory)||(factory == sushiFactory), "ABANDONED");
+        require((factory == uniFactory) || (factory == sushiFactory), "ABANDONED");
         address token0 = IUniswapV2Pair(msg.sender).token0();
         address token1 = IUniswapV2Pair(msg.sender).token1();
         require(msg.sender == UniswapV2Library.pairFor(factory, token0, token1), "ABANDONED");
@@ -42,38 +43,35 @@ contract FlashCallback is IUniswapV2Callee{
         uint amount1_,
         bytes calldata data_
     ) override external onlyAllowCallback() {
-        require(sender_ != address(0));
-        require(amount0_ == 0 || amount1_ == 0);
-
-        // true이면, token1을 lending 받은 콜백 요청
-        // false이면, token0을 lending 받은 콜백 요청
-        bool lendToken1 = isLendingToken1(amount0_, amount1_);
-
-        IERC20 token;
         address[] memory path;
+        IERC20 token;
+        uint amountToken;
         {
+            // true이면, token1을 lending 받은 콜백 요청
+            // false이면, token0을 lending 받은 콜백 요청
+            bool lendToken1 = isLendingToken1(amount1_);
             address token0 = IUniswapV2Pair(msg.sender).token0();
             address token1 = IUniswapV2Pair(msg.sender).token1();
 
             path = new address[](2);
             path[0] = lendToken1 ? token1 : token0;
             path[1] = lendToken1 ? token0 : token1;
+
             token = IERC20(lendToken1 ? token1 : token0);
+            amountToken = lendToken1 ? amount1_ : amount0_;
+            token.approve(sushiRouter, amountToken);
         }
-        uint amountToken = lendToken1 ? amount1_ : amount0_;
-        token.approve(address(sushiRouter), amountToken);
 
         // Uniswap에 갚아야 하는 금액
         uint amountRequired = UniswapV2Library.getAmountsIn(uniFactory, amountToken, path)[0];
         // sushiswap으로부터 받는 금액
-        uint amountReceived = sushiRouter.swapExactTokensForTokens(amountToken, amountRequired, path, msg.sender, block.timestamp + deadline)[1];
+        uint amountReceived = IUniswapV2Router02(sushiRouter).swapExactTokensForTokens(amountToken, amountRequired, path, msg.sender, block.timestamp + deadline)[1];
 
         // Profit Earned
         token.transfer(sender_, amountReceived - amountRequired);
     }
 
-    function isLendingToken1(uint amount0, uint amount1) private returns (bool) {
+    function isLendingToken1(uint amount1) private returns (bool) {
         return amount1 != 0;
     }
-
 }
